@@ -1,18 +1,28 @@
 import '@/style/base.scss'
 import * as React from 'react'
-import { render } from 'react-dom'
+import { createRoot } from 'react-dom/client'
 
-const appendHtml = (parent:Element, child:any)=>{
-    render(
-        child,
-        parent
+import { store } from './store/store'
+
+import {Home} from './home'
+import {Mine} from './mine'
+
+const root = createRoot(document.getElementById('app') as HTMLElement)
+
+root.render(
+    <div>
+        {/* <Mine></Mine> */}
+        <Home start={2} />
+    </div>
+    
+)
+
+store.subscribe(()=>{
+    root.render(
+        <div>
+            {/* <Mine></Mine> */}
+            <Home />
+        </div>
+        
     )
-}
-
-document.getElementById('test1Btn').onclick = ()=>{
-    import(/* webpackChunkName: "home" */'./home').then(({kk})=>{
-        console.log(kk)
-    })
-}
-
-appendHtml(document.getElementById('app'),(<h1>react</h1>))
+})

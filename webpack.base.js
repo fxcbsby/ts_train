@@ -25,20 +25,24 @@ module.exports = {
             },
             {
                 test:/\.tsx?$/,
+                include:path.resolve(__dirname,'src'),
                 use:[
                     {
-                        loader: 'babel-loader',
+                        loader: require.resolve('babel-loader'),
+                        
                         options: {
-                          presets: [
-                            '@babel/preset-env',
-                            [
-                              '@babel/preset-react',
-                              { pragma: 'createElement' },
-                            ],
-                          ],
+                            customize: require.resolve(
+                                'babel-preset-react-app/webpack-overrides'
+                              ),
+                              presets: [
+                                [
+                                  require.resolve('babel-preset-react-app'),
+                                
+                                ],
+                              ],
                         },
                     },
-                    'ts-loader',
+                    // require.resolve('ts-loader'),
                     {
                         loader:'eslint-loader',
                         options:{
@@ -74,6 +78,13 @@ module.exports = {
         new cssExtract({
             filename:'css/index[contenthash:3].css',
             chunkFilename:'css/[name].chunk[chunkhash:3].css'
-        })      
+        }),
+        //定义全局变量
+        new webpack.DefinePlugin({
+            //这里必须要解析成字符串进行判断，不然将会被识别为一个变量
+               globalStates: {
+                homeStates:{}
+               }
+           })     
     ]
 }

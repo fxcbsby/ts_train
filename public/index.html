@@ -8,9 +8,213 @@
 </head>
 <body>
     <div id="app"></div>
-    <section id="test">
-        <button id="test1Btn">click me</button>
-    </section>
-    <section id="test2"></section>
+    <style>
+        #flex{
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+
+            border: 2px solid #ddd;
+            /* height: 1000px; */
+        }
+        #flex .item{
+            position: relative;
+            width: 200px;
+            height: 200px;
+            text-align: center;
+            line-height: 200px;
+            font-size: 20px;
+            border: 1px solid red;
+            width: 20%;
+            user-select: none;
+        }
+        #flex .item .cover{
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .btn{
+            width: 50px;
+            height: 36px;
+            line-height: 36px;
+            margin-right: 30px;
+        }
+    </style>
+    <button class="btn" onclick="edit()">编辑</button>
+    <button class="btn" onclick="save()">保存</button>
+    <div id="flex">
+        <div class="item">
+            <div class="cover">1</div>
+        </div>
+        <div class="item"><div class="cover"><a href="">2</a></div></div>
+        <div class="item"><div class="cover">3</div></div>
+        <div class="item"><div class="cover">4</div></div>
+        <!-- <div class="item">5</div>
+        <div class="item">6</div>
+        <div class="item">7</div> -->
+        <!-- <div class="item">8</div>
+        <div class="item">9</div>
+        <div class="item">10</div> -->
+    </div>
+    <script>
+        function edit(){
+            const items = document.querySelectorAll('.item')
+            for(let i in items){
+                if(items.hasOwnProperty(i)){
+                    items[i].querySelector('.cover').style.display = 'block'
+                }
+            }
+        }
+        function save(){
+            const items = document.querySelectorAll('.item')
+            for(let i in items){
+                if(items.hasOwnProperty(i)){
+                    items[i].querySelector('.cover').style.display = 'none'
+                }
+            }
+        }
+        
+        // 全局mousedown触发时，赋值为true
+        let bodyMouseDownFlag = false
+
+        function calcRightBorder(e){
+            const elem = e.target
+            const oriLeft = elem.offsetLeft
+            const oriWidth = elem.offsetWidth
+
+            const areaR = oriLeft+oriWidth
+            
+            return areaR
+        }
+
+
+        dropFunc({
+            className:'item',
+            isParent: false
+        })
+        function dropFunc({className=null,axisBorder = 20,isParent}){
+            // 拖拽
+            function insertAfter(newElement,targetElement){
+                var parent = targetElement.parentNode;//获取目标元素的父节点
+                if(parent.lastChild == targetElement){
+                parent.appendChid(newElement);
+                }else{
+                parent.insertBefore(newElement,targetElement.nextSibling);
+                //nextSibling是表示下一个兄弟元素节点
+                }
+            }
+
+            let dropElem = null
+            document.addEventListener('mousedown',(e)=>{
+                // debugger
+                const elem = isParent?e.target.parentNode:e.target
+                bodyMouseDownFlag = true
+                const areaR = calcRightBorder(e)
+                if (elem.className == className){
+                    if(e.clientX >= elem.offsetLeft && e.clientX < areaR-axisBorder){
+                        document.body.style.cursor = 'move'
+                        dropElem = elem
+                    }else{
+                        dropElem = null
+                    }
+                    
+                }else{
+                    dropElem = null
+                }
+                
+
+            })
+            document.addEventListener('mouseup',(e)=>{
+                const elem = isParent?e.target.parentNode:e.target
+                bodyMouseDownFlag = false
+                document.body.style.cursor = 'default'
+                if (dropElem){
+                    insertAfter(dropElem,elem)
+                }
+            })
+        }
+        
+    </script>
+    <script>
+        // 大小
+        let sizeItems = document.querySelectorAll('.item')
+
+        for(let i in sizeItems){
+            if(sizeItems.hasOwnProperty(i)){
+                changeSize({
+                    item:sizeItems[i],
+                    containerWidth: document.querySelectorAll('#flex')[0].offsetWidth, // 容器总宽
+                    splitNums:4 // 一行分多少份
+                })
+            }
+        }
+
+        function changeSize({item=null, axisBorder=20, crossBorder=10,containerWidth=0,splitNums=4}){
+            let itemMouseDownFlag = false
+            let rightborderSpace = 0
+            let endElem = null
+            item.addEventListener('mousemove',(e)=>{
+                const elem = e.target
+                const areaR = calcRightBorder(e)
+                if (itemMouseDownFlag === false && bodyMouseDownFlag === true){
+                    return
+                }
+                // 鼠标hover
+                if(e.clientX >= areaR-axisBorder && e.clientX < areaR){
+                    
+                    document.body.style.cursor = 'col-resize'
+                    
+                }else{
+                    if(itemMouseDownFlag === false){
+                        document.body.style.cursor = 'default'
+                    }
+                }
+
+                // 鼠标拖动
+                if (itemMouseDownFlag === true){
+
+                    elem.style.width = e.clientX-elem.offsetLeft+rightborderSpace+'px'
+                    endElem = elem
+
+                }
+            })
+            item.addEventListener('mouseout',(e)=>{
+                itemMouseDownFlag = false
+            })
+            item.addEventListener('mousedown',(e)=>{
+                const elem = e.target
+
+                const oriLeft = elem.offsetLeft
+                const oriWidth = elem.offsetWidth
+
+                const areaR = oriLeft+oriWidth
+                
+                if(e.clientX >= areaR-axisBorder && e.clientX <= areaR){
+                    itemMouseDownFlag = true
+                    rightborderSpace = areaR-e.clientX
+                }
+                endElem?endElem.style.transition = 'none':''
+
+            })
+            item.addEventListener('mouseup',(e)=>{
+                itemMouseDownFlag = false
+                // 根据宽度阶段，重设宽度
+                const stageWidth = containerWidth/splitNums
+                const currentStage = e.target.offsetWidth/stageWidth
+                const floorStage = Math.floor(e.target.offsetWidth/stageWidth)
+                const ceilStage = Math.ceil(e.target.offsetWidth/stageWidth)
+                if(endElem){
+                    if(currentStage>=floorStage+0.5){
+                        endElem.style.width = stageWidth*ceilStage+'px'
+                    }else{
+                        endElem.style.width = stageWidth*floorStage+'px'
+                    }
+                    endElem.style.transition = 'width .5s'
+                }
+            })
+        }
+    </script>
 </body>
 </html>

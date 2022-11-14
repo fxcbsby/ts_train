@@ -7,7 +7,8 @@ const UglifyJsPlugin = require('webpack-parallel-uglify-plugin');
 const webpack = require('webpack');
 let { CleanWebpackPlugin } = require('clean-webpack-plugin')
 
-
+process.env.BABEL_ENV = 'production';
+process.env.NODE_ENV = 'production';
 
 module.exports = merge(base, {
     mode: 'production',
