@@ -16,7 +16,7 @@ export default function App(){
             <Link to='/home'>home</Link>
             <Link to='/mine'>mine</Link>
             <div>
-                <React.Suspense fallback={ <div>正在加载...</div> }>
+                <React.Suspense fallback={ <div>正在加载中...</div> }>
                     <Routes>
                         <Route path='/home' element={ <LazyHome /> } />
                         <Route path='/mine' element={ <LazyMine /> } />
