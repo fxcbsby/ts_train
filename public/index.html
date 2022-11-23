@@ -8,163 +8,53 @@
 </head>
 <body>
     <div id="app"></div>
+    <div id="div" class="progress-bar " style="height:100px;width:10px;background:red;"></div>
+    <button id="start">开始动画</button>
     <script>
-        function edit(){
-            const items = document.querySelectorAll('.item')
-            for(let i in items){
-                if(items.hasOwnProperty(i)){
-                    items[i].querySelector('.cover').style.display = 'block'
-                }
-            }
+        let btn = document.getElementById('start')
+        let div = document.getElementById('div')
+        let start = 0
+        let allInterval = []
+      
+        const progress = () => {
+          div.style.width = div.offsetWidth + 1 + 'px'
+          div.innerHTML = (div.offsetWidth) + '%'
+          if (div.offsetWidth < 100) {
+            let current = Date.now()
+            allInterval.push(current - start)
+            start = current
+            requestAnimationFrame(progress)
+          }  
         }
-        function save(){
-            const items = document.querySelectorAll('.item')
-            for(let i in items){
-                if(items.hasOwnProperty(i)){
-                    items[i].querySelector('.cover').style.display = 'none'
-                }
-            }
-        }
-        
-        // 全局mousedown触发时，赋值为true
-        let bodyMouseDownFlag = false
-
-        function calcRightBorder(e){
-            const elem = e.target
-            const oriLeft = elem.offsetLeft
-            const oriWidth = elem.offsetWidth
-
-            const areaR = oriLeft+oriWidth
-            
-            return areaR
-        }
-
-
-        dropFunc({
-            className:'item',
-            isParent: false
+      
+        btn.addEventListener('click', () => {
+          div.style.width = 0
+          let currrent = Date.now()
+          start = currrent
+          requestAnimationFrame(progress)
+          document.dispatchEvent(evt)
         })
-        function dropFunc({className=null,axisBorder = 20,isParent}){
-            // 拖拽
-            function insertAfter(newElement,targetElement){
-                var parent = targetElement.parentNode;//获取目标元素的父节点
-                if(parent.lastChild == targetElement){
-                parent.appendChid(newElement);
-                }else{
-                parent.insertBefore(newElement,targetElement.nextSibling);
-                //nextSibling是表示下一个兄弟元素节点
-                }
-            }
+        btn.addEventListener('click', () => {
+          console.log(121)
+        })
+      </script>
+      <script>
+        // 定义事件
+        const evtType = 'myEvent'
+        const evt = document.createEvent('Event')
+        evt.initEvent(evtType,false,false)
+        // 注册事件
+        document.addEventListener(evtType,function(){
+            console.log('触发'+evtType)
+        })
+        // 触发事件
+        document.dispatchEvent(evt)
 
-            let dropElem = null
-            document.addEventListener('mousedown',(e)=>{
-                // debugger
-                const elem = isParent?e.target.parentNode:e.target
-                bodyMouseDownFlag = true
-                const areaR = calcRightBorder(e)
-                if (elem.className == className){
-                    if(e.clientX >= elem.offsetLeft && e.clientX < areaR-axisBorder){
-                        document.body.style.cursor = 'move'
-                        dropElem = elem
-                    }else{
-                        dropElem = null
-                    }
-                    
-                }else{
-                    dropElem = null
-                }
-                
-
-            })
-            document.addEventListener('mouseup',(e)=>{
-                const elem = isParent?e.target.parentNode:e.target
-                bodyMouseDownFlag = false
-                document.body.style.cursor = 'default'
-                if (dropElem){
-                    insertAfter(dropElem,elem)
-                }
-            })
+        function test(a,b){
+            console.log(a,b)
         }
-        
-    </script>
-    <script>
-        // 大小
-        let sizeItems = document.querySelectorAll('.item')
-
-        for(let i in sizeItems){
-            if(sizeItems.hasOwnProperty(i)){
-                changeSize({
-                    item:sizeItems[i],
-                    containerWidth: document.querySelectorAll('#flex')[0].offsetWidth, // 容器总宽
-                    splitNums:4 // 一行分多少份
-                })
-            }
-        }
-
-        function changeSize({item=null, axisBorder=20, crossBorder=10,containerWidth=0,splitNums=4}){
-            let itemMouseDownFlag = false
-            let rightborderSpace = 0
-            let endElem = null
-            item.addEventListener('mousemove',(e)=>{
-                const elem = e.target
-                const areaR = calcRightBorder(e)
-                if (itemMouseDownFlag === false && bodyMouseDownFlag === true){
-                    return
-                }
-                // 鼠标hover
-                if(e.clientX >= areaR-axisBorder && e.clientX < areaR){
-                    
-                    document.body.style.cursor = 'col-resize'
-                    
-                }else{
-                    if(itemMouseDownFlag === false){
-                        document.body.style.cursor = 'default'
-                    }
-                }
-
-                // 鼠标拖动
-                if (itemMouseDownFlag === true){
-
-                    elem.style.width = e.clientX-elem.offsetLeft+rightborderSpace+'px'
-                    endElem = elem
-
-                }
-            })
-            item.addEventListener('mouseout',(e)=>{
-                itemMouseDownFlag = false
-            })
-            item.addEventListener('mousedown',(e)=>{
-                const elem = e.target
-
-                const oriLeft = elem.offsetLeft
-                const oriWidth = elem.offsetWidth
-
-                const areaR = oriLeft+oriWidth
-                
-                if(e.clientX >= areaR-axisBorder && e.clientX <= areaR){
-                    itemMouseDownFlag = true
-                    rightborderSpace = areaR-e.clientX
-                }
-                endElem?endElem.style.transition = 'none':''
-
-            })
-            item.addEventListener('mouseup',(e)=>{
-                itemMouseDownFlag = false
-                // 根据宽度阶段，重设宽度
-                const stageWidth = containerWidth/splitNums
-                const currentStage = e.target.offsetWidth/stageWidth
-                const floorStage = Math.floor(e.target.offsetWidth/stageWidth)
-                const ceilStage = Math.ceil(e.target.offsetWidth/stageWidth)
-                if(endElem){
-                    if(currentStage>=floorStage+0.5){
-                        endElem.style.width = stageWidth*ceilStage+'px'
-                    }else{
-                        endElem.style.width = stageWidth*floorStage+'px'
-                    }
-                    endElem.style.transition = 'width .5s'
-                }
-            })
-        }
-    </script>
+        const b = test.bind(null,1)
+        b(3,4)
+      </script>
 </body>
 </html>
