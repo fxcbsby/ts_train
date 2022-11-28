@@ -10,7 +10,7 @@
     <div id="app"></div>
     <style>
         #flex{
-            display: flex;
+            display: none;
             flex-direction: row;
             flex-wrap: wrap;
             justify-content: flex-start;
@@ -44,7 +44,7 @@
     </style>
     <button class="btn" onclick="edit()">编辑</button>
     <button class="btn" onclick="save()">保存</button>
-    <div id="flex">
+    <div id="flex" >
         <div class="item">
             <div class="cover">1</div>
         </div>
@@ -58,6 +58,276 @@
         <div class="item">9</div>
         <div class="item">10</div> -->
     </div>
+    <style>
+        #grid{
+            border: 1px solid red;
+            width: 60%;
+            margin-top: 20px;
+            height: 300px;
+            display: none;
+            grid-template-columns: repeat(3,1fr);
+            grid-template-rows: repeat(4,1fr);
+            grid-template-areas: 'a1 a1 a1 a1'
+                                  'b1 b1 b1 b1'
+                                  'c1 c1 c1 c1';
+            float: left;
+        }
+        #grid .grid-item{
+            border: 1px solid red;
+            text-align: center;
+        }
+        #config{
+            float: left;
+            width: 30%;
+            margin-top: 20px;
+            height: 300px;
+            border: 1px solid black;
+            margin-left:20px;
+        }
+        #menus{
+            user-select: none;
+            margin: 20px;
+            height: 150px;
+            border: 1px solid red;
+        }
+        #menus .menu-item{
+            border: 1px solid red;
+            text-align: center;
+            cursor: move;
+        }
+    </style>
+    <div style="clear: both;"></div>
+    <div id="grid">
+        <div class="grid-item">1</div>
+        <div class="grid-item">2</div>
+        <div class="grid-item">3</div>
+        <div class="grid-item">4</div>
+        <div class="grid-item">5</div>
+        <div class="grid-item">6</div>
+        <div class="grid-item">7</div>
+        <div class="grid-item">8</div>
+        <div class="grid-item">9</div>
+        <div class="grid-item">10</div>
+        <div class="grid-item">11</div>
+        <div class="grid-item">12</div>
+    </div>
+    
+    <style>
+        #table{
+            width: 60%;
+            float: left;
+            margin-top: 20px;
+        }
+        .table{
+            width: 100%;
+            height: 300px;
+            /* border: 1px dashed #ddd */
+        }
+        .table td{
+            border: 1px dashed black;
+            width: 25%;
+            height: 33%;
+        }
+        .table td[colSpan="2"]{
+            width: 50%;
+        }
+        .table td[colSpan="3"]{
+            width: 75%;
+        }
+        .table td[rowSpan="2"]{
+            height: 66%;
+        }
+    </style>
+    <div id="table">
+        <table class="table" cellspacing="0">
+            <tr>
+                <td class="td-item">1</td><td class="td-item">2</td><td class="td-item">3</td><td class="td-item">4</td>
+            </tr>
+            <tr>
+                <td class="td-item">5</td><td class="td-item">6</td><td class="td-item">7</td><td class="td-item">8</td>
+            </tr>
+            <tr>
+                <td class="td-item">9</td><td class="td-item">10</td><td class="td-item">11</td><td class="td-item">12</td>
+            </tr>
+        </table>
+    </div>
+    <div id="config">
+        列<input id="cols" type="text" value="2" />
+        行<input id="rows" type="text" value="2" />
+        <div id="menus">
+            <div class="menu-item">AAA</div>
+            <div class="menu-item">BBB</div>
+            <div class="menu-item">CCC</div>
+            <div class="menu-item">DDD</div>
+        </div>
+    </div>
+    <script>
+        
+        let dragElem = null,
+            container = $('.table')
+        document.addEventListener('mousedown',(e)=>{
+            if(e.target.className != 'menu-item'){
+                dragElem = null
+                return
+            }
+            dragElem = e.target
+        })
+        document.addEventListener('mouseup',(e)=>{
+            const colSpan = Number($('#cols').value), 
+                  rowSpan = Number($('#rows').value),
+                  td = e.target,
+                  currentRowIndex = td.parentNode.rowIndex;
+            let resFlag = true;
+                  console.log(e)
+            if(dragElem && td.className == 'td-item'){
+                let child = document.createElement('div')
+                if(colSpan < 1 || rowSpan < 1){
+                    alert('不能合并')
+                    return
+                }
+                // rowSpan越界
+                if(rowSpan > container.lastChild.children.length-currentRowIndex){
+                    alert('不能合并')
+                    return
+                }
+                try {
+                    for(let i=0;i<rowSpan;i++){
+                        if(i === 0){
+                            if(!colSpanAfter(td,colSpan)){
+                                // 判断当前行是否满足合并条件
+                                alert('不能合并')
+                                return
+                            }
+                        }else{
+                            if (!rowSpanAfter(td,colSpan,currentRowIndex+i)){
+                                // 判断下一行是否满足合并条件
+                                alert('不能合并')
+                                return
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.log(error)
+                    resFlag = false
+                }
+                if(resFlag){
+                    for(let i=0;i<rowSpan;i++){
+                        if(i === 0){
+                            // 删除当前行td
+                            deleteColCells(td,colSpan,td.cellIndex+1)
+                        }else{
+                            // 删除下一行td
+                            let { nextCell,nextIndex } = getNextTd(td,currentRowIndex+i)
+                            deleteColCells(nextCell,colSpan,nextIndex)
+                        }
+                    }
+
+                    td.setAttribute('colSpan', colSpan)
+                    td.setAttribute('rowSpan', rowSpan)
+
+                    td.innerHTML = dragElem.innerHTML
+                }
+                
+            }
+            
+        })
+        // 行方向向后合并
+        function colSpanAfter(current,colSpan){
+            const index = current.cellIndex,
+                  tr = current.parentNode,
+                  tds = tr.cells;
+            // colSpan越界
+            if(colSpan > current.parentNode.cells.length-index){
+                return false
+            }
+            // 判断合并过的单元格不能再次合并
+            for (let i=index;i<index+colSpan;i++){
+                if(!isSpanCell(tds[i])){
+                    return false;
+                }
+            }
+            return true
+        }
+        // 删除行方向单元格
+        function deleteColCells(current,colSpan,j){
+            const index = current.cellIndex,
+                  tr = current.parentNode,
+                  tds = tr.cells;
+            for (j;j<index+colSpan;j++){
+                    tds[j].remove();
+                    j--;
+                    colSpan --;
+                }
+        }
+        // 列方向向下合并
+        function rowSpanAfter(current,colSpan,nextRowIndex){
+            const index = current.cellIndex,
+                  tr = current.parentNode,
+                  rowIndex = tr.rowIndex,
+                  left = current.offsetLeft,
+                  width = current.offsetWidth;
+
+            let   nextTr = container.lastChild.children[nextRowIndex],
+                  nextCells = nextTr.cells;
+           
+            if(!nextTr || nextTr.tagName != 'TR'){
+                return false
+            }
+            const { nextCell,nextIndex } = getNextTd(current,nextRowIndex)
+            if(!nextCell){
+                return false
+            }
+            // colSpan越界
+            if(colSpan > nextCells.length-nextIndex){
+                return false
+            }
+            // 判断下一行合并过的单元格不能再次合并
+            for (let j=nextIndex;j<nextIndex+colSpan;j++){
+                if(!isSpanCell(nextCells[j])){
+                    return false;
+                }
+            }
+            return true
+        }
+        // 获取下一行对应index的td
+        function getNextTd(current, nextRowIndex){
+            const left = current.offsetLeft,
+                  width = current.offsetWidth;
+            let   nextTr = container.lastChild.children[nextRowIndex],
+                  nextCells = nextTr.cells,
+                  nextIndex = 0,
+                  nextCell = null;
+            // 根据左边距、宽度相等原理，找到下一行对应的td
+            for(let i=0;i<nextCells.length;i++){
+                const nLeft = nextCells[i].offsetLeft,
+                      nWidth = nextCells[i].offsetWidth;
+                if(nLeft == left && nWidth == width){
+                    nextCell = nextCells[i];
+                    nextIndex = nextCell.cellIndex;
+                    break;
+                }
+            }
+            return {
+                nextCell,nextIndex,nextCells
+            }
+        }
+        // 判断单元格是否合并过
+        function isSpanCell(cell){
+            if(cell.colSpan>1 || cell.rowSpan>1){
+                return false
+            }
+            return true
+        }
+        function $(selector){
+            const elems = document.querySelectorAll(selector)
+            if(elems.length > 1){ 
+                return elems
+            }else if(elems.length == 1){
+                return elems[0]
+            }
+            return null
+        }
+    </script>
     <script>
         function edit(){
             const items = document.querySelectorAll('.item')
